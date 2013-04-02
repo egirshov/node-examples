@@ -10,11 +10,11 @@ var TEST_PORT = 9000;
 var sequence = [];
 var ignored_events = ['newListener'];
 
-function assert (entry, origin, message) {
+function compare(entry, origin, message) {
     assert(entry[0] === origin,
-            'Expect message from ' + origin + ', got from ' + entry[0]);
+        'Expect message "' + message + '" from ' + origin + ', got from ' + entry[0]);
     assert(entry[1] === message,
-            'Expect message ' + message + ', got ' + entry[1]);
+        'Expect message ' + message + ', got ' + entry[1]);
 }
 
 function fail(message) {
@@ -45,7 +45,7 @@ function verify(description, expect) {
         assert(sequence.length === expect.length,
             'Expect ' + expect.length + ' events, got ' + sequence.length);
         for (var i = 0; i < sequence.length; i += 1) {
-            assert(sequence[i], expect[i][0], expect[i][1]);
+            compare(sequence[i], expect[i][0], expect[i][1]);
         }
     });
 }
@@ -73,7 +73,6 @@ function request(options, callback) {
 }
 
 module.exports = {
-    assert: assert,
     createServer: createServer,
     fail: fail,
     hijack: hijack,

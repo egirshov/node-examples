@@ -1,8 +1,9 @@
 var lib = require('./lib.js');
 
-lib.verify('Request failed',
+lib.verify('PUT Request failed',
 [
     ['client', 'request()'],
+    ['client', 'request.write()'],
     ['client', 'request.socket'],
     ['client', 'request.finish'],
     ['client', 'request.error'],
@@ -15,5 +16,7 @@ var request = lib.request({port: 12345}, function (response) {
 request.on('error', function () {
     // supress exception
 });
+lib.record('client', 'request.write()');
+request.write('request body');
 request.end();
 setTimeout(function () {}, 100);

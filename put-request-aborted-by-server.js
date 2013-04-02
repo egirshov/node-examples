@@ -1,13 +1,13 @@
 var lib = require('./lib.js');
 
-lib.verify('PUT request aborted while sending request data', [
+
+lib.verify('PUT request aborted by server', [
     ['client', 'request()'],
-    ['client', 'request.write()'],
     ['client', 'request.socket'],
     ['client', 'request.drain'],
     ['server', 'request'],
     ['server', 'request.data'],
-    ['client', 'request.abort()'],
+    ['server', 'request.destroy()'],
     ['client', 'request.close'],
     ['client', 'request.error'],
     ['server', 'request.aborted'],
@@ -16,24 +16,19 @@ lib.verify('PUT request aborted while sending request data', [
 ]);
 
 var server = lib.createServer(function (req, res) {
-    req.on('end', function () {
-        lib.fail('Unexpected server request `end` event');
-    });
+    setTimeout(function () {
+        lib.record('server', 'request.destroy()');
+        request.destroy();
+    }, 100);
 });
 
 var request = lib.request({method: 'PUT'}, function (response) {
     lib.fail('Unexpected response event');
 });
 request.once('error', function (e) {
-    // empty handle to supress exception
 });
-lib.record('client', 'request.write()');
-request.write('request body');
+request.write('part of request body');
 
-setTimeout(function () {
-    lib.record('client', 'request.abort()');
-    request.abort();
-}, 300);
 
 setTimeout(function () {
     server.close();
