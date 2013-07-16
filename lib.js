@@ -1,6 +1,7 @@
 'use strict';
 
 var assert = require('assert');
+var fs = require('fs');
 var http = require('http');
 
 var CLIENT = 'client';
@@ -8,7 +9,7 @@ var SERVER = 'server';
 var TEST_PORT = 9000;
 
 var sequence = [];
-var ignored_events = ['newListener'];
+var ignored_events = ['newListener', 'drain', 'finish'];
 
 function compare(entry, origin, message) {
     assert(entry[0] === origin,
@@ -35,9 +36,22 @@ function hijack(emitter, where, what) {
 function record(where, what) {
     console.log('Record:', where, what);
     sequence.push([where, what]);
+};
+
+function endswith(what, suffix) {
+    var i = what.indexOf(suffix);
+    return i >= 0 && i + suffix.length === what.length;
 }
 
 function verify(description, expect) {
+    expect = expect.filter(function (item) {
+        for (var v in ignored_events) {
+            if (endswith(item[1], ignored_events[v])) {
+                return false;
+            }
+        }
+        return true;
+    });
     process.on('exit', function () {
         console.log('\n\n', description, '\n');
         console.log(JSON.stringify(sequence));
@@ -47,6 +61,16 @@ function verify(description, expect) {
         for (var i = 0; i < sequence.length; i += 1) {
             compare(sequence[i], expect[i][0], expect[i][1]);
         }
+
+        // Sequence verified, write report
+        var reportFile;
+        try {
+             reportFile = JSON.parse(fs.readFileSync('report.json'));
+        } catch (e) {
+             reportFile = {report: []};
+        }
+        reportFile.report.push(sequence);
+        fs.writeFileSync('report.json', JSON.stringify(reportFile, undefined, 2));
     });
 }
 
